@@ -12,7 +12,7 @@ LDFLAGS = $(PRU_SWPKG)/labs/lab_2/AM335x_PRU.cmd
 all: am335x-pru0-fw
 
 hello-pru0.o: hello-pru0.c
-	$(CC) $(CFLAGS) $^ -fe $@
+	$(CC) $(CFLAGS) $^ --output_file $@
 
 am335x-pru0-fw: hello-pru0.o
 	$(LD) $(LDFLAGS) $^ -o $@
