@@ -11,7 +11,7 @@ all: am335x-pru0-fw
 hello-pru0.o: hello-pru0.c
 	$(CC) $(CFLAGS) $^ -fe $@
 
-am335x-pru0-fw: hello-pru0.o /home/glock/src/cloud9-examples/common/am335x_pru.cmd
+am335x-pru0-fw: hello-pru0.o am335x_pru.cmd
 	$(LD) $(LDFLAGS) $^ -o $@
 
 clean:
