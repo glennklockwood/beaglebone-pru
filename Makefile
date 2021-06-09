@@ -2,10 +2,9 @@
 
 CC = clpru
 LD = lnkpru
-CFLAGS = --include_path=/home/glock/src/cloud9-examples/common \
-	 --include_path=/usr/lib/ti/pru-software-support-package/include \
-	 --include_path=/usr/lib/ti/pru-software-support-package/include/am335x \
-	 --include_path=/usr/share/ti/cgt-pru/include
+CFLAGS = --include_path=/usr/lib/ti/pru-software-support-package/include \
+         --include_path=/usr/lib/ti/pru-software-support-package/include/am335x \
+         --include_path=/usr/share/ti/cgt-pru/include
 
 all: am335x-pru0-fw
 
