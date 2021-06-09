@@ -15,7 +15,7 @@ am335x-pru0-fw: hello-pru0.o /home/glock/src/cloud9-examples/common/am335x_pru.c
 	$(LD) $(LDFLAGS) $^ -o $@
 
 clean:
-	rm -vf hello.pru0.o am335x-pru0-fw
+	rm -vf hello-pru0.o am335x-pru0-fw
 
 install: am335x-pru0-fw
 	cp -v am335x-pru0-fw /lib/firmware/am335x-pru0-fw
