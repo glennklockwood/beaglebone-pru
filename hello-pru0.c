@@ -27,6 +27,12 @@ void main(void) {
     }
 }
 
+/* without the following resource table,starting the PRU will generate these
+ * errors in syslog:
+ *
+ * kernel: remoteproc remoteproc1: header-less resource table
+ * kernel: remoteproc remoteproc1: Boot failed: -22
+ */
 #pragma DATA_SECTION(pru_remoteproc_ResourceTable, ".resource_table")
 #pragma RETAIN(pru_remoteproc_ResourceTable)
 struct my_resource_table pru_remoteproc_ResourceTable = {
