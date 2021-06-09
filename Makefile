@@ -6,12 +6,14 @@ CFLAGS = --include_path=/usr/lib/ti/pru-software-support-package/include \
          --include_path=/usr/lib/ti/pru-software-support-package/include/am335x \
          --include_path=/usr/share/ti/cgt-pru/include
 
+PRU_LINKER_CMD = /usr/lib/ti/pru-software-support-package/labs/lab_2/AM335x_PRU.cmd
+
 all: am335x-pru0-fw
 
 hello-pru0.o: hello-pru0.c
 	$(CC) $(CFLAGS) $^ -fe $@
 
-am335x-pru0-fw: hello-pru0.o am335x_pru.cmd
+am335x-pru0-fw: hello-pru0.o $(PRU_LINKER_CMD)
 	$(LD) $(LDFLAGS) $^ -o $@
 
 clean:
