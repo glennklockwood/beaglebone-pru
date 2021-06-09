@@ -35,9 +35,4 @@ void main(void) {
  */
 #pragma DATA_SECTION(pru_remoteproc_ResourceTable, ".resource_table")
 #pragma RETAIN(pru_remoteproc_ResourceTable)
-struct my_resource_table pru_remoteproc_ResourceTable = {
-    1,      /* we're the first version that implements this */
-    0,      /* number of entries in the table */
-    0, 0,   /* reserved, must be zero */
-    0,      /* offset[0] */
-};
+struct my_resource_table pru_remoteproc_ResourceTable = { 1, 0, 0, 0, 0 };
