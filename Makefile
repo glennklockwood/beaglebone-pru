@@ -1,5 +1,7 @@
 .PHONY: all clean install
 
+TARGET_OBJ = hello-pru0-p9_45
+
 PRU_SWPKG = /usr/lib/ti/pru-software-support-package
 
 CC = clpru
@@ -11,14 +13,14 @@ LDFLAGS = $(PRU_SWPKG)/labs/lab_2/AM335x_PRU.cmd
 
 all: am335x-pru0-fw
 
-hello-pru0.o: hello-pru0.c
-	$(CC) $(CFLAGS) $^ --output_file $@
-
-am335x-pru0-fw: hello-pru0.o
+am335x-pru0-fw: $(TARGET_OBJ).o
 	$(LD) $(LDFLAGS) $^ -o $@
 
+%.o: %.c
+	$(CC) $(CFLAGS) $^ --output_file $@
+
 clean:
-	rm -vf hello-pru0.o am335x-pru0-fw
+	rm -vf $(TARGET_OBJ).o am335x-pru0-fw
 
 install: am335x-pru0-fw
 	cp -v am335x-pru0-fw /lib/firmware/am335x-pru0-fw
