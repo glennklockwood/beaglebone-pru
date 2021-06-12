@@ -11,11 +11,6 @@
 
 #define CYCLES_PER_SECOND 200000000 /* PRU has 200 MHz clock */
 
-struct my_resource_table {
-    struct resource_table base;
-    uint32_t offset[1];
-};
-
 void main(void) {
     uint32_t *gpio1 = (uint32_t *)GPIO1;
     
@@ -35,4 +30,7 @@ void main(void) {
  */
 #pragma DATA_SECTION(pru_remoteproc_ResourceTable, ".resource_table")
 #pragma RETAIN(pru_remoteproc_ResourceTable)
-struct my_resource_table pru_remoteproc_ResourceTable = { 1, 0, 0, 0, 0 };
+struct my_resource_table {
+    struct resource_table base;
+    uint32_t offset[1];
+} pru_remoteproc_ResourceTable = { 1, 0, 0, 0, 0 };;
