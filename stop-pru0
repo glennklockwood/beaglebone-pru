@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-echo stop > /sys/class/remoteproc/remoteproc1/state
-sleep 0.1
-cat /sys/class/remoteproc/remoteproc1/state

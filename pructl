@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+USE_PRU=${2-0}
+
+declare -A PRU_MAP
+PRU_MAP[0]=/sys/class/remoteproc/remoteproc1
+PRU_MAP[1]=/sys/class/remoteproc/remoteproc2
+
+pru_state() {
+    cat "${PRU_MAP[$1]}/state"
+}
+
+pru_start() {
+    echo start > "${PRU_MAP[$1]}/state"
+}
+
+pru_stop() {
+    echo stop > "${PRU_MAP[$1]}/state"
+}
+
+if [[ $1 == start ]]; then
+    state="$(pru_state)"
+    if [[ $state == offline ]]; then
+        pru_start $USE_PRU
+    else
+        # echo "Error: PRU is in $state state" >&2
+        exit 1
+    fi
+elif [[ $1 == stop ]]; then
+    state="$(pru_state)"
+    if [[ $state == running ]]; then
+      pru_stop $USE_PRU
+    else
+      # echo "Error: PRU is in $state state" >&2
+      exit 1
+    fi
+elif [[ $1 == state ]]; then
+    echo "pru${USE_PRU}: $(pru_state $USE_PRU)"
+else
+    echo "Syntax: $(basename $0) <start|stop|state>" >&2
+    exit 1
+fi
