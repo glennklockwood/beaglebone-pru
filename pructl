@@ -7,7 +7,7 @@ PRU_MAP[0]=/sys/class/remoteproc/remoteproc1
 PRU_MAP[1]=/sys/class/remoteproc/remoteproc2
 
 pru_state() {
-    cat "${PRU_MAP[$1]}/state"
+    cat "${PRU_MAP[$USE_PRU]}/state"
 }
 
 pru_start() {
