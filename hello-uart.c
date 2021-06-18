@@ -20,64 +20,33 @@
 #include <pru_uart.h>
 #include "resource_table_empty.h"
 
-/* The FIFO size on the PRU UART is 16 bytes; however, we are (arbitrarily)
- * only going to send 8 at a time */
-#define FIFO_SIZE   16
-#define MAX_CHARS   8
-#define BUFFER      40
+#define MAX_CHARS 16
+#define BUF_SIZE 40
 
-//******************************************************************************
-//    Print Message Out
-//      This function take in a string literal of any size and then fill the
-//      TX FIFO when it's empty and waits until there is info in the RX FIFO
-//      before returning.
-//******************************************************************************
-void PrintMessageOut(volatile char* Message)
+void uart_put(char *s)
 {
-    uint8_t cnt, index = 0;
+    uint8_t index = 0;
 
-    while (1) {
-        cnt = 0;
+    do {
+        uint8_t count = 0;
 
         /* Wait until the TX FIFO and the TX SR are completely empty */
         while (!CT_UART.LSR_bit.TEMT);
 
-        while (Message[index] != NULL && cnt < MAX_CHARS) {
-            CT_UART.THR = Message[index];
+        while (s[index] != '\0' && count < MAX_CHARS) {
+            CT_UART.THR = s[index];
             index++;
-            cnt++;
+            count++;
         }
-        if (Message[index] == NULL)
-            break;
-    }
+    } while (s[index] != '\0');
 
     /* Wait until the TX FIFO and the TX SR are completely empty */
     while (!CT_UART.LSR_bit.TEMT);
 
 }
 
-//******************************************************************************
-//    IEP Timer Config
-//      This function waits until there is info in the RX FIFO and then returns
-//      the first character entered.
-//******************************************************************************
-char ReadMessageIn(void)
+void uart_init(void)
 {
-    while (!CT_UART.LSR_bit.DR);
-
-    return CT_UART.RBR_bit.DATA;
-}
-
-void main(void)
-{
-    uint32_t i;
-    volatile uint32_t not_done = 1;
-
-    char rxBuffer[BUFFER];
-    rxBuffer[BUFFER-1] = NULL; // null terminate the string
-
-    /*** INITIALIZATION ***/
-
     /* Set up UART to function at 115200 baud - DLL divisor is 104 at 16x oversample
      * 192MHz / 104 / 16 = ~115200 */
     CT_UART.DLL = 104;
@@ -113,30 +82,41 @@ void main(void)
     CT_UART.MCR_bit.AFE = 0x0;
     CT_UART.MCR_bit.RTS = 0x0;
 
-    /*** END INITIALIZATION ***/
 
-    while(1) {
-        /* Print out greeting message */
-        PrintMessageOut("Hello you are in the PRU UART demo test please enter some characters\r\n");
+}
 
-        /* Read in characters from user, then echo them back out */
-        for (i = 0; i < BUFFER-1 ; i++) {
-            rxBuffer[i] = ReadMessageIn();
-            if(rxBuffer[i] == '\r') {   // Quit early if ENTER is hit.
-                rxBuffer[i+1] = NULL;
+void main(void)
+{
+    char buf[BUF_SIZE] = { NULL };
+    uint8_t done = 0;
+
+    uart_init();
+
+    while (!done) {
+        uart_put("Enter some characters: ");
+
+        for (uint32_t i = 0; i < BUF_SIZE - 1; i++) {
+
+            while (!CT_UART.LSR_bit.DR);
+
+            buf[i] = CT_UART.RBR_bit.DATA;
+
+            if (buf[i] == '\r') {
+                buf[i+1] = NULL;
+                break;
+            }
+            else if (buf[i] == 'Z') {
+                done = 1;
                 break;
             }
         }
 
-        PrintMessageOut("you typed:\r\n");
-        PrintMessageOut(rxBuffer);
-        PrintMessageOut("\r\n");
+        uart_put("\n\rYou entered: ");
+        uart_put(buf);
+        uart_put("\n\r");
     }
 
-    /*** DONE SENDING DATA ***/
-    /* Disable UART before halting */
+    uart_put("\n\rHalting\n\r");
     CT_UART.PWREMU_MGMT = 0x0;
-
-    /* Halt PRU core */
     __halt();
 }
