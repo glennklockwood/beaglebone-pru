@@ -1,9 +1,6 @@
-/* From: http://git.ti.com/pru-software-support-package/pru-software-support-package/trees/master/pru_cape/pru_fw/PRU_Hardware_UART
+/* Notes from gkl on June 16, 2021:
  *
- * Notes from gkl on June 16, 2021:
- *
- * The above link points to source that doesn't work on BeagleBone Black.
- * This code does work though.  Code taken from :
+ * Code taken from :
  *
  *     https://beagleboard.org/static/prucookbook/#debug_uart2
  *
@@ -14,6 +11,10 @@
  * 3. Black to ground
  *
  * Then use `screen /dev/tty.usbserial-0001 $((12*9600))` on macOS.
+ *
+ * Full UART reference is in "AM335x and AMIC110 Sitara(tm) Processors
+ * Technical Reference Manual v2.2," Section 4.4.4 (Universal Asynchronous
+ * Receiver/Transmitter (UART)) pp241-253.
  *
  */
 #include <stdint.h>
