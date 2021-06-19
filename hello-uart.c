@@ -24,6 +24,50 @@
 #define MAX_CHARS 16
 #define BUF_SIZE 40
 
+void uart_init(void)
+{
+    /* use 115200 baud (192MHz / 104 / 16x = 115200) */
+    CT_UART.DLL = 104; /* divisor latch low */
+    CT_UART.DLH = 0; /* divisor latch high - called DLM in TL16C550C data sheet */
+
+    /* Mode Definition Register */
+    CT_UART.MDR_bit.OSM_SEL = 0; /* use 16x oversampling */
+
+    /* Interrupt Enable Register */
+    CT_UART.IER_bit.ERBI = 1; /* enable received data available */
+    CT_UART.IER_bit.ETBEI = 1; /* enable transmitter holding register empty */
+    CT_UART.IER_bit.ELSI = 1; /* enable receiver line status */
+    CT_UART.IER_bit.EDSSI = 0; /* enable modem status */
+
+    /* FIFO Control Register */
+    CT_UART.FCR_bit.FIFOEN = 1; /* FIFO enable */
+    CT_UART.FCR_bit.RXCLR = 1; /* receiver FIFO reset */
+    CT_UART.FCR_bit.TXCLR = 1; /* transmitter FIFO reset */
+    CT_UART.FCR_bit.DMAMODE1 = 1; /* DMA mode select - cause RXRDY and TXRDY to change from 0 to 1 */
+    CT_UART.FCR_bit.RXFIFTL = 2; /* receiver trigger - trigger at 8 bytes*/
+
+    /* Line Control Register */
+    CT_UART.LCR_bit.WLS = 3; /* word length select; 0b11 = 8 bits */
+    CT_UART.LCR_bit.STB = 0; /* number of stop bits; 0 = 1 stop bit */
+    CT_UART.LCR_bit.PEN = 0; /* parity enable */
+    CT_UART.LCR_bit.EPS = 0; /* even parity select */
+    CT_UART.LCR_bit.SP = 0; /* stick parity */
+    CT_UART.LCR_bit.BC = 0; /* break control */
+    CT_UART.LCR_bit.DLAB = 0; /* divisor latch access */
+
+    /* Modem Control Register */
+    CT_UART.MCR_bit.RTS = 0; /* request to send */
+    CT_UART.MCR_bit.OUT1 = 0; /* user-designated output signal */
+    CT_UART.MCR_bit.OUT2 = 0; /* user-designated output signal */
+    CT_UART.MCR_bit.LOOP = 0; /* loop back for diagnistic testing */
+    CT_UART.MCR_bit.AFE = 0; /* autoflow control enable */
+
+    /* Power and Emulation Management Register */
+    CT_UART.PWREMU_MGMT_bit.FREE = 1; /* do not halt on halt/break */
+    CT_UART.PWREMU_MGMT_bit.URRST = 1; /* enable transmitter */
+    CT_UART.PWREMU_MGMT_bit.UTRST = 1; /* enable receiver */
+}
+
 void uart_put(char *s)
 {
     uint8_t index = 0;
@@ -31,8 +75,7 @@ void uart_put(char *s)
     do {
         uint8_t count = 0;
 
-        /* Wait until the TX FIFO and the TX SR are completely empty */
-        while (!CT_UART.LSR_bit.TEMT);
+        while (!CT_UART.LSR_bit.TEMT); /* TEMT = THR and TSR empty? */
 
         while (s[index] != '\0' && count < MAX_CHARS) {
             CT_UART.THR = s[index];
@@ -41,54 +84,12 @@ void uart_put(char *s)
         }
     } while (s[index] != '\0');
 
-    /* Wait until the TX FIFO and the TX SR are completely empty */
-    while (!CT_UART.LSR_bit.TEMT);
-
-}
-
-void uart_init(void)
-{
-    /* Set up UART to function at 115200 baud - DLL divisor is 104 at 16x oversample
-     * 192MHz / 104 / 16 = ~115200 */
-    CT_UART.DLL = 104;
-    CT_UART.DLH = 0;
-    CT_UART.MDR_bit.OSM_SEL = 0x0;
-
-    /* Enable Interrupts in UART module. This allows the main thread to poll for
-     * Receive Data Available and Transmit Holding Register Empty */
-    CT_UART.IER = 0x7;
-
-    /* If FIFOs are to be used, select desired trigger level and enable
-     * FIFOs by writing to FCR. FIFOEN bit in FCR must be set first before
-     * other bits are configured */
-    /* Enable FIFOs for now at 1-byte, and flush them */
-    CT_UART.FCR = (0x80) | (0x8) | (0x4) | (0x2) | (0x01); // 8-byte RX FIFO trigger
-
-    /* Choose desired protocol settings by writing to LCR */
-    /* 8-bit word, 1 stop bit, no parity, no break control and no divisor latch */
-    CT_UART.LCR = 3;
-
-    /* If flow control is desired write appropriate values to MCR. */
-    /* No flow control for now, but enable loopback for test */
-    CT_UART.MCR = 0x00;
-
-    /* Choose desired response to emulation suspend events by configuring
-     * FREE bit and enable UART by setting UTRST and URRST in PWREMU_MGMT */
-    /* Allow UART to run free, enable UART TX/RX */
-    CT_UART.PWREMU_MGMT_bit.FREE = 0x1;
-    CT_UART.PWREMU_MGMT_bit.URRST = 0x1;
-    CT_UART.PWREMU_MGMT_bit.UTRST = 0x1;
-
-    /* Turn off RTS and CTS functionality */
-    CT_UART.MCR_bit.AFE = 0x0;
-    CT_UART.MCR_bit.RTS = 0x0;
-
-
+    while (!CT_UART.LSR_bit.TEMT); /* TEMT = THR and TSR empty? */
 }
 
 void main(void)
 {
-    char buf[BUF_SIZE] = { NULL };
+    char buf[BUF_SIZE] = { '\0' };
     uint8_t done = 0;
 
     uart_init();
@@ -97,13 +98,12 @@ void main(void)
         uart_put("Enter some characters: ");
 
         for (uint32_t i = 0; i < BUF_SIZE - 1; i++) {
-
-            while (!CT_UART.LSR_bit.DR);
+            while (!CT_UART.LSR_bit.DR); /* data ready bit */
 
             buf[i] = CT_UART.RBR_bit.DATA;
 
             if (buf[i] == '\r') {
-                buf[i+1] = NULL;
+                buf[i+1] = '\0';
                 break;
             }
             else if (buf[i] == 'Z') {
@@ -118,6 +118,9 @@ void main(void)
     }
 
     uart_put("\n\rHalting\n\r");
-    CT_UART.PWREMU_MGMT = 0x0;
+
+    CT_UART.PWREMU_MGMT_bit.URRST = 0; /* disable transmitter */
+    CT_UART.PWREMU_MGMT_bit.UTRST = 0; /* disable receiver */
+
     __halt();
 }
