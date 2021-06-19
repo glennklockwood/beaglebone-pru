@@ -25,7 +25,8 @@ void uart_put(char *s)
     do {
         uint8_t count = 0;
 
-        while (!CT_UART.LSR_bit.TEMT); /* TEMT = THR and TSR empty? */
+        while (!CT_UART.LSR_bit.TEMT) /* !transmit registers empty? */
+            ;
 
         while (s[index] != '\0' && count < FIFO_SIZE) {
             CT_UART.THR = s[index];
@@ -33,6 +34,20 @@ void uart_put(char *s)
             count++;
         }
     } while (s[index] != '\0');
+}
+
+void uart_get(char *buf, uint32_t size) {
+    uint32_t i;
+    for (i = 0; i < size - 1; i++) {
+        while (!CT_UART.LSR_bit.DR) /* !data ready? */
+            ;
+
+        buf[i] = CT_UART.RBR_bit.DATA;
+
+        if (buf[i] == '\r')
+            break;
+    }
+    buf[i] = '\0';
 }
 
 void main(void)
@@ -45,16 +60,7 @@ void main(void)
     while (!done) {
         uart_put("\n\rEnter some characters: ");
 
-        for (uint32_t i = 0; i < BUF_SIZE - 1; i++) {
-            while (!CT_UART.LSR_bit.DR);
-
-            buf[i] = CT_UART.RBR_bit.DATA;
-
-            if (buf[i] == '\r') {
-                buf[i+1] = '\0';
-                break;
-            }
-        }
+        uart_get(buf, BUF_SIZE);
 
         uart_put("\n\rYou entered: ");
         uart_put(buf);
