@@ -1,2 +1,3 @@
 am335x-pru0-fw
 *.o
+*.bin

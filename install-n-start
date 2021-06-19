@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+set -e
+
+USE_PRU=${2-0}
+
+declare -A PRU_MAP
+PRU_MAP[0]=/sys/class/remoteproc/remoteproc1
+PRU_MAP[1]=/sys/class/remoteproc/remoteproc2
+
+target="$(basename $1 .bin)"
+if [ -z "$target" ]; then
+  echo "Syntax: $(basename $0) <target> [pru id]" 2>&1
+  exit 1
+fi
+
+target="${target}.bin"
+if [ ! -f "$target" ]; then
+  make $target
+fi
+
+echo stop > "${PRU_MAP[$USE_PRU]}/state"
+cp -v "$target" "/lib/firmware/am335x-pru0-fw"
+echo start > "${PRU_MAP[$USE_PRU]}/state"

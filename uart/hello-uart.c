@@ -66,6 +66,9 @@ void uart_init(void)
        above indicates that the trigger level must be set for the FIFO, but if
        we aren't using interrupts, does this matter?  what happens if the FIFO
        fills up?
+
+       A: "There is no trigger level reached or time-out condition indicated in
+       the FIFO polled mode."
      */
     CT_UART.FCR_bit.FIFOEN = 1; /* FIFO enable */
     CT_UART.FCR_bit.RXCLR = 1; /* receiver FIFO reset */

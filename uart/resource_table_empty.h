@@ -1,0 +1,1 @@
+../resource_table_empty.h
