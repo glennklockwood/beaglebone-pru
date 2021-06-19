@@ -15,7 +15,6 @@ void uart_init(void)
     CT_UART.FCR_bit.RXCLR = 1; /* receiver FIFO reset */
     CT_UART.FCR_bit.TXCLR = 1; /* transmitter FIFO reset */
     CT_UART.LCR_bit.WLS = 3; /* word length select; 0b11 = 8 bits */
-//  CT_UART.PWREMU_MGMT_bit.FREE = 1; /* do not halt on halt/break */
     CT_UART.PWREMU_MGMT_bit.URRST = 1; /* enable transmitter */
     CT_UART.PWREMU_MGMT_bit.UTRST = 1; /* enable receiver */
 }
