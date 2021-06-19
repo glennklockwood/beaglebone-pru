@@ -19,13 +19,14 @@ void uart_init(void)
     CT_UART.PWREMU_MGMT_bit.UTRST = 1; /* enable receiver */
 }
 
-void uart_put(char *s)
+void uart_tx(char *s)
 {
     uint8_t index = 0;
     do {
         uint8_t count = 0;
 
-        while (!CT_UART.LSR_bit.TEMT) /* !transmit registers empty? */
+        /* while transmit registers aren't empty, do nothing */
+        while (!CT_UART.LSR_bit.TEMT)
             ;
 
         while (s[index] != '\0' && count < FIFO_SIZE) {
@@ -36,10 +37,11 @@ void uart_put(char *s)
     } while (s[index] != '\0');
 }
 
-void uart_get(char *buf, uint32_t size) {
+void uart_rx(char *buf, uint32_t size) {
     uint32_t i;
     for (i = 0; i < size - 1; i++) {
-        while (!CT_UART.LSR_bit.DR) /* !data ready? */
+        /* while data is not ready, do nothing */
+        while (!CT_UART.LSR_bit.DR)
             ;
 
         buf[i] = CT_UART.RBR_bit.DATA;
@@ -58,12 +60,10 @@ void main(void)
     uart_init();
 
     while (!done) {
-        uart_put("\n\rEnter some characters: ");
-
-        uart_get(buf, BUF_SIZE);
-
-        uart_put("\n\rYou entered: ");
-        uart_put(buf);
+        uart_tx("\n\rEnter some characters: ");
+        uart_rx(buf, BUF_SIZE);
+        uart_tx("\n\rYou entered: ");
+        uart_tx(buf);
     }
 }
 
