@@ -26,6 +26,28 @@
 
 void uart_init(void)
 {
+    /* According to the AM335x and AMIC110 Sitara Technical Reference Manual Sec. 4.4.4.2.7:
+
+    The following steps are required to initialize the UART:
+
+    1. Perform the necessary device pin multiplexing setup (see your
+       device-specific data manual).
+    2. Set the desired baud rate by writing the appropriate clock divisor values
+       to the divisor latch registers (DLL and DLH).
+    3. If the FIFOs will be used, select the desired trigger level and enable
+       the FIFOs by writing the appropriate values to the FIFO control register
+       (FCR). The FIFOEN bit in FCR must be set first, before the other bits in
+       FCR are configured.
+    4. Choose the desired protocol settings by writing the appropriate values to
+       the line control register (LCR).
+    5. If autoflow control is desired, write appropriate values to the modem
+       control register (MCR). Note that all UARTs do not support autoflow
+       control; see your device-specific data manual for supported features.
+    6. Choose the desired response to emulation suspend events by configuring
+       the FREE bit, and enable the UART by setting the UTRST and URRST bits in
+       the power and emulation management register (PWREMU_MGMT).
+    */
+
     /* use 115200 baud (192MHz / 104 / 16x = 115200) */
     CT_UART.DLL = 104; /* divisor latch low */
     CT_UART.DLH = 0; /* divisor latch high - called DLM in TL16C550C data sheet */
@@ -40,6 +62,11 @@ void uart_init(void)
     CT_UART.IER_bit.EDSSI = 0; /* enable modem status interrupt */
 
     /* FIFO Control Register */
+    /* not sure this is set up correctly; the six-step initialization process
+       above indicates that the trigger level must be set for the FIFO, but if
+       we aren't using interrupts, does this matter?  what happens if the FIFO
+       fills up?
+     */
     CT_UART.FCR_bit.FIFOEN = 1; /* FIFO enable */
     CT_UART.FCR_bit.RXCLR = 1; /* receiver FIFO reset */
     CT_UART.FCR_bit.TXCLR = 1; /* transmitter FIFO reset */
