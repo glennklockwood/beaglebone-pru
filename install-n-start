@@ -19,6 +19,6 @@ if [ ! -f "$target" ]; then
   make $target
 fi
 
-echo stop > "${PRU_MAP[$USE_PRU]}/state"
+echo stop > "${PRU_MAP[$USE_PRU]}/state" || true
 cp -v "$target" "/lib/firmware/am335x-pru0-fw"
 echo start > "${PRU_MAP[$USE_PRU]}/state"
