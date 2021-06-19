@@ -34,17 +34,17 @@ void uart_init(void)
     CT_UART.MDR_bit.OSM_SEL = 0; /* use 16x oversampling */
 
     /* Interrupt Enable Register */
-    CT_UART.IER_bit.ERBI = 1; /* enable received data available */
-    CT_UART.IER_bit.ETBEI = 1; /* enable transmitter holding register empty */
-    CT_UART.IER_bit.ELSI = 1; /* enable receiver line status */
-    CT_UART.IER_bit.EDSSI = 0; /* enable modem status */
+    CT_UART.IER_bit.ERBI = 0; /* enable received data available interrupt */
+    CT_UART.IER_bit.ETBEI = 0; /* enable transmitter holding register empty interrupt */
+    CT_UART.IER_bit.ELSI = 0; /* enable receiver line status interrupt */
+    CT_UART.IER_bit.EDSSI = 0; /* enable modem status interrupt */
 
     /* FIFO Control Register */
     CT_UART.FCR_bit.FIFOEN = 1; /* FIFO enable */
     CT_UART.FCR_bit.RXCLR = 1; /* receiver FIFO reset */
     CT_UART.FCR_bit.TXCLR = 1; /* transmitter FIFO reset */
-    CT_UART.FCR_bit.DMAMODE1 = 1; /* DMA mode select - cause RXRDY and TXRDY to change from 0 to 1 */
-    CT_UART.FCR_bit.RXFIFTL = 2; /* receiver trigger - trigger at 8 bytes*/
+    CT_UART.FCR_bit.DMAMODE1 = 0; /* DMA mode select - set to change RXRDY and TXRDY from 0 to 1 */
+    CT_UART.FCR_bit.RXFIFTL = 0; /* receiver trigger - trigger at 8 bytes */
 
     /* Line Control Register */
     CT_UART.LCR_bit.WLS = 3; /* word length select; 0b11 = 8 bits */
