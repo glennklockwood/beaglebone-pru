@@ -18,10 +18,10 @@
  *
  */
 #include <stdint.h>
-#include <pru_uart.h>
+#include <pru_uart.h> /* provides CT_UART */
 #include "resource_table_empty.h"
 
-#define MAX_CHARS 16
+#define FIFO_SIZE 16
 #define BUF_SIZE 40
 
 void uart_init(void)
@@ -50,7 +50,7 @@ void uart_init(void)
 
     /* use 115200 baud (192MHz / 104 / 16x = 115200) */
     CT_UART.DLL = 104; /* divisor latch low */
-    CT_UART.DLH = 0; /* divisor latch high - called DLM in TL16C550C data sheet */
+    CT_UART.DLH = 0;   /* divisor latch high - aka DLM*/
 
     /* Mode Definition Register */
     CT_UART.MDR_bit.OSM_SEL = 0; /* use 16x oversampling */
@@ -98,7 +98,7 @@ void uart_init(void)
     CT_UART.PWREMU_MGMT_bit.UTRST = 1; /* enable receiver */
 }
 
-void uart_put(char *s)
+void uart_tx(char *s)
 {
     uint8_t index = 0;
 
@@ -107,48 +107,46 @@ void uart_put(char *s)
 
         while (!CT_UART.LSR_bit.TEMT); /* TEMT = THR and TSR empty? */
 
-        while (s[index] != '\0' && count < MAX_CHARS) {
+        while (s[index] != '\0' && count < FIFO_SIZE) {
             CT_UART.THR = s[index];
             index++;
             count++;
         }
     } while (s[index] != '\0');
-
-    while (!CT_UART.LSR_bit.TEMT); /* TEMT = THR and TSR empty? */
 }
 
 void main(void)
 {
-    char buf[BUF_SIZE] = { '\0' };
     uint8_t done = 0;
+    char buf[BUF_SIZE] = { '\0' };
 
     uart_init();
 
     while (!done) {
-        uart_put("Enter some characters: ");
+        uint32_t i;
+        uart_tx("\n\rEnter some characters: ");
 
-        for (uint32_t i = 0; i < BUF_SIZE - 1; i++) {
+        for (i = 0; i < BUF_SIZE - 1; i++) {
             while (!CT_UART.LSR_bit.DR); /* data ready bit */
 
             buf[i] = CT_UART.RBR_bit.DATA;
 
-            if (buf[i] == '\r') {
-                buf[i+1] = '\0';
+            if (buf[i] == '\r')
                 break;
-            }
             else if (buf[i] == 'Z') {
                 done = 1;
                 break;
             }
         }
-
-        uart_put("\n\rYou entered: ");
-        uart_put(buf);
-        uart_put("\n\r");
+        buf[i] = '\0';
+        uart_tx("\n\rYou entered: ");
+        uart_tx(buf);
     }
 
-    uart_put("\n\rHalting\n\r");
+    uart_tx("\n\rHalting");
 
+    /* without delay, transmitter can shut off before tx completes */
+    __delay_cycles(1000000);
     CT_UART.PWREMU_MGMT_bit.URRST = 0; /* disable transmitter */
     CT_UART.PWREMU_MGMT_bit.UTRST = 0; /* disable receiver */
 

@@ -10,7 +10,7 @@ void uart_init(void)
     /* use 115200 baud (192 MHz / 104 / 16 = 115200) */
     CT_UART.DLL = 104; /* divisor latch low */
     CT_UART.DLH = 0;   /* divisor latch high - aka DLM*/
-    CT_UART.MDR_bit.OSM_SEL = 0; /* 16x oversampling */
+    CT_UART.MDR_bit.OSM_SEL = 0; /* use 16x oversampling */
     CT_UART.FCR_bit.FIFOEN = 1; /* FIFO enable */
     CT_UART.FCR_bit.RXCLR = 1; /* receiver FIFO reset */
     CT_UART.FCR_bit.TXCLR = 1; /* transmitter FIFO reset */
@@ -55,11 +55,10 @@ void uart_rx(char *buf, uint32_t size) {
 void main(void)
 {
     char buf[BUF_SIZE] = { '\0' };
-    uint8_t done = 0;
 
     uart_init();
 
-    while (!done) {
+    while (1) {
         uart_tx("\n\rEnter some characters: ");
         uart_rx(buf, BUF_SIZE);
         uart_tx("\n\rYou entered: ");
