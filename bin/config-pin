@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+"""Python implementation of BeagleBone's config-pin tool
+
+Provides better error checking than the script and C binary.
+
+Glenn K. Lockwood, June 2021
+"""
+
+from os.path import isfile
+import sys
+import re
+import argparse
+
+NAMES_FILE = "/sys/firmware/devicetree/base/ocp/{}_pinmux/pinctrl-names"
+STATE_FILE = "/sys/devices/platform/ocp/ocp:{}_pinmux/state"
+VERBOSE = False
+
+def normalize_pin(pin_name):
+    return pin_name.upper().replace('.-', '_')
+
+class GpioPin():
+    """Base object for configuring a GPIO pin state
+
+    This object caches pin mode and options indefinitely and expects that
+    nothing else will manipulate the pin mode on the system.
+
+    Args:
+        name (str): Name of header to configure, e.g., P9_31
+
+    Attributes:
+        mode (str): Current configuration of pin.  Can be assigned new values.
+        modes (list of str): Valid modes supported by the pin.
+
+    Raises:
+        ValueError: On invalid pin name
+    """
+    def __init__(self, name):
+        self.name = normalize_pin(name)
+        self.state_file = STATE_FILE.format(self.name)
+        self.names_file = NAMES_FILE.format(self.name)
+        if not (isfile(self.state_file) and isfile(self.names_file)):
+            raise ValueError("Invalid pin {}".format(self.name))
+        self._modes = None
+        self._mode = None
+
+    def __str__(self):
+        return "{} {}".format(self.name, self.mode)
+
+    @property
+    def mode(self):
+        if not self._mode:
+            self._mode = open(self.state_file, 'r').read().strip()
+        return self._mode
+
+    @mode.setter
+    def mode(self, mode):
+        if mode.lower() not in self.modes:
+            raise ValueError("Invalid pin mode")
+        with open(self.state_file, 'w') as state_fp:
+            state_fp.write(mode)
+
+    @property
+    def modes(self):
+        if not self._modes:
+            self._modes = re.split(
+                r'[\s\n\r\x00]',
+                open(self.names_file, 'r').read().strip().strip('\x00'))
+        return self._modes
+
+def apply_configfile(configfile):
+    errors = 0
+    with open(configfile, 'r') as configs:
+        for config in configs:
+            if config.lstrip().startswith('#'):
+                continue
+            pin_name, pin_mode = config.strip().split(None, 1)
+            pin = GpioPin(pin_name)
+            errors += set_mode(pin, pin_mode)
+    return errors
+
+def _vprint(msg):
+    global VERBOSE 
+    if VERBOSE:
+        sys.stdout.write(msg)
+
+def set_mode(pin, mode):
+    """Traps errors when setting pin mode and prints helpful messages.
+
+    Args:
+        pin (GpioPin): Pin object to change
+        mode (str): Valid pin mode to set (e.g., pru_uart)
+
+    Raises:
+        ValueError: If invalid pin mode is specified
+    """
+    _vprint("Setting {} to mode {}...".format(pin.name, mode.lower()))
+    try:
+        pin.mode = mode
+        _vprint("success\n")
+        return 0
+    except ValueError:
+        _vprint("failure\n")
+        sys.stderr.write("Invalid mode. {}\n".format(print_modes(pin)))
+        return 1
+
+def print_modes(pin):
+    """Generates a human-readable representation of valid pin modes.
+
+    Args:
+        pin (GpioPin): Pin whose modes should be listed.
+
+    Returns:
+        str: Pretty description of valid pin modes.
+    """
+    return "Valid modes for {} are {}".format(pin.name, ' '.join(pin.modes))
+
+def print_config(pin):
+    """Generates a human-readable representation of current pin mode.
+
+    Args:
+        pin (GpioPin): Pin whose mode should be shown.
+
+    Returns:
+        str: Pretty description of current pin mode configuration.
+    """
+    return "Pin {} is configured as: {}".format(pin.name, pin.mode)
+
+def main(argv=None):
+    """Provides a command-line interface into GpioPin object.
+
+    Args:
+        argv (list of str): Command-line parameters.
+    """
+    global VERBOSE
+
+    parser = argparse.ArgumentParser(description="GPIO pin configurator")
+    mode_args = parser.add_mutually_exclusive_group()
+    mode_args.add_argument("-c", "--configfile", help="read config modes from file instead of specific pin")
+    mode_args.add_argument("-l", "--list", dest='list_pin', help="list valid config modes for pin")
+    mode_args.add_argument("-q", "--query", dest='query_pin', help="show current config mode for pin")
+    parser.add_argument("pin", nargs='?', help="pin to modify (e.g., P9_31)")
+    parser.add_argument("mode", nargs='?', help="desired pin config mode (e.g., pru_uart)")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args(argv)
+
+    VERBOSE = args.verbose
+
+    if args.configfile:
+        errors = apply_configfile(args.configfile)
+        if errors:
+            sys.stderr.write("{:d} pins could not be configured.\n".format(errors))
+    elif args.list_pin:
+        pin = GpioPin(args.list_pin)
+        print(print_modes(pin))
+    elif args.query_pin:
+        pin = GpioPin(args.query_pin)
+        print(print_config(pin))
+    elif args.mode:
+        pin = GpioPin(args.pin)
+        error = set_mode(pin, args.mode)
+        if not error:
+            print(print_config(pin))
+    elif args.pin:
+        pin = GpioPin(args.pin)
+        print(print_config(pin))
+        print(print_modes(pin))
+    else:
+        parser.print_help(sys.stderr)
+
+if __name__ == '__main__':
+    main()
