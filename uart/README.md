@@ -1,3 +1,5 @@
+# Hello World - UART Edition
+
 The documentation for this code is located here:
 
 <https://www.glennklockwood.com/sysadmin-howtos/beaglebone.html#pru-uart>
@@ -16,3 +18,14 @@ Don't forget to config-pin appropriately first:
 
     config-pin p9_17 pru_uart
     config-pin p9_18 pru_uart
+
+## Contents
+
+This directory contains the source for the following hello world
+implementations:
+
+Binary                  | Description
+------------------------|-----------------------
+hello-uart.bin          | Verbose implementation of hello-uart
+hello-uart-minimal.bin  | More compact version of hello-uart
+hello-uart-factored.bin | hello-uart with UART functions factored out into uart.c to facilitate reuse

@@ -1,9 +1,5 @@
 /* Notes from gkl on June 16, 2021:
  *
- * Code taken from :
- *
- *     https://beagleboard.org/static/prucookbook/#debug_uart2
- *
  * Use USB to TTL cable (Adafruit part 954) and connect
  *
  * 1. Green to P9_17
@@ -26,7 +22,8 @@
 
 void uart_init(void)
 {
-    /* According to the AM335x and AMIC110 Sitara Technical Reference Manual Sec. 4.4.4.2.7:
+    /* According to the AM335x and AMIC110 Sitara Technical Reference Manual
+       Sec. 4.4.4.2.7:
 
     The following steps are required to initialize the UART:
 
@@ -62,13 +59,12 @@ void uart_init(void)
     CT_UART.IER_bit.EDSSI = 0; /* enable modem status interrupt */
 
     /* FIFO Control Register */
-    /* not sure this is set up correctly; the six-step initialization process
-       above indicates that the trigger level must be set for the FIFO, but if
-       we aren't using interrupts, does this matter?  what happens if the FIFO
-       fills up?
-
-       A: "There is no trigger level reached or time-out condition indicated in
-       the FIFO polled mode."
+    /* Q: The six-step initialization process above indicates that the trigger
+     * level must be set for the FIFO, but if we aren't using interrupts, does
+     * this matter?  what happens if the FIFO fills up?
+     *
+     * A: "There is no trigger level reached or time-out condition indicated in
+     * the FIFO polled mode."
      */
     CT_UART.FCR_bit.FIFOEN = 1; /* FIFO enable */
     CT_UART.FCR_bit.RXCLR = 1; /* receiver FIFO reset */
