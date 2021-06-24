@@ -30,9 +30,31 @@ same tool.  Its options are fully compatible with the originals, but it also
 - returns a meaningful error if you try to set a pin to an invalid mode
 - has a handy `-h`/`--help` option
 
-It's a bit slower since it's Python, but I like being able to see all the info
-on a pin using `config-pin p9_31` rather than having to specify
-`config-pin -q p9_31 && config-pin -l p9_31`
+It's a bit slower since it's Python, but I think its richness makes up for
+that.  For example, specifying a pin with no parameters something useful:
+
+    $ config-pin p9_31
+    Pin P9_31 is configured as: pruout
+    Valid modes for P9_31 are default gpio gpio_pu gpio_pd spi_sclk pwm pruout pruin
+
+The original command-line flags (`-q`, `-l`, `-f`) still work:
+
+    $ config-pin -l p9_31
+    Valid modes for P9_31 are default gpio gpio_pu gpio_pd spi_sclk pwm pruout pruin
+
+Setting a new mode for a pin works too:
+
+    $ config-pin p9_31 pruout
+    Pin P9_31 is configured as: pruout
+
+Trying to set an invalid mode for a pin tells you something helpful rather than
+throwing a `No such device` error:
+
+    $ config-pin p9_31 somethinginvalid
+    Invalid mode. Valid modes for P9_31 are default gpio gpio_pu gpio_pd spi_sclk pwm pruout pruin
+ 
+If you peek at its source code, you can see that it is implemented using a
+class that you may find useful for other BeagleBone automation tasks.
 
 [1]: https://www.glennklockwood.com/embedded/beaglebone.html
 [2]: https://github.com/beagleboard/bb.org-overlays/blob/master/tools/beaglebone-universal-io/config-pin
