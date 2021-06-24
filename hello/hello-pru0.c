@@ -12,9 +12,9 @@ volatile register uint32_t __R30; /* output register for PRU */
 void main(void) {
     while (1) {
         SET_BIT(__R30, P9_31);
-        __delay_cycles(CYCLES_PER_SECOND / 4); /* wait 0.5 seconds */
+        __delay_cycles(CYCLES_PER_SECOND / 4); /* wait 0.25 seconds */
         REMOVE_BIT(__R30, P9_31);
-        __delay_cycles(CYCLES_PER_SECOND / 4); /* wait 0.5 seconds */
+        __delay_cycles(CYCLES_PER_SECOND / 4); /* wait 0.25 seconds */
     }
 }
 
