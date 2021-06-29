@@ -14,19 +14,15 @@
 
 #define P9_31 (1 << 0)
 #define P8_15 (1 << 15)
-#define SET_BIT(reg, bit) (reg) |= (bit)
-#define REMOVE_BIT(reg, bit) (reg) &= ~(bit)
-#define IS_SET(reg, bit) (reg) & (bit)
 
-volatile register uint32_t __R30; /* output register for PRU */
-volatile register uint32_t __R31; /* input register for PRU */
+volatile register uint32_t __R30, __R31;
 
 void main(void) {
     while (1) {
-        if (IS_SET(__R31, P8_15)) /* if button is pressed */
-            SET_BIT(__R30, P9_31);
+        if (__R31 & P8_15) /* if button is pressed */
+            __R30 |= P9_31; /* set bit */
         else
-            REMOVE_BIT(__R30, P9_31);
+            __R30 &= ~P9_31; /* remove bit */
     }
 }
 
