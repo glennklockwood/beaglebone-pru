@@ -1,6 +1,6 @@
 .PHONY: all clean install
 
-TARGETS = button-flash-pru0.bin button-uart-pru0.bin
+TARGETS = button-flash-pru0.bin button-uart-pru0.bin button-on-pru0.bin
 
 PRU_SWPKG = /usr/lib/ti/pru-software-support-package
 
